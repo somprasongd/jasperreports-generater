@@ -1,0 +1,326 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="medical_certificate" language="groovy" pageWidth="595" pageHeight="842" columnWidth="515" leftMargin="40" rightMargin="40" topMargin="40" bottomMargin="40" uuid="145df507-145b-4aa0-a339-1e3ad7002442">
+	<property name="ireport.zoom" value="1.2100000000000006"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="240"/>
+	<parameter name="medical_certificate_no" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[select t_medical_certificate.medical_certificate_no as medical_certificate_no
+    ,t_medical_certificate.issue_date::date as issue_date
+    ,((t_medical_certificate.details -> 'physician') ->> 'name') as physician_name
+    ,((t_medical_certificate.details -> 'physician') ->> 'license_no') as physician_license
+    ,((t_medical_certificate.details -> 'patient') ->> 'name') as patient_name
+    ,((t_medical_certificate.details -> 'examination') ->> 'date')::date as examination_date
+    ,((t_medical_certificate.details -> 'examination') ->> 'place') as examination_place
+    ,((t_medical_certificate.details -> 'examination') ->> 'address') as examination_address
+    ,((t_medical_certificate.details -> 'examination') ->> 'time') as examination_time
+    ,((t_medical_certificate.details -> 'examination') ->> 'diagnosis') as examination_diagnosis
+    ,((t_medical_certificate.details -> 'examination') ->> 'opinion_recommendation') as opinion_recommendation
+    ,(((t_medical_certificate.details -> 'examination') -> 'rest_day') ->> 'total') as total_leave_day
+    ,case when (((t_medical_certificate.details -> 'examination') -> 'rest_day') ->> 'start') is not null
+          then (((t_medical_certificate.details -> 'examination') -> 'rest_day') ->> 'start')::date
+          else null end as start_leave_day
+    ,case when (((t_medical_certificate.details -> 'examination') -> 'rest_day') ->> 'end') is not null
+          then (((t_medical_certificate.details -> 'examination') -> 'rest_day') ->> 'end')::date
+          else null end as end_leave_day
+    ,t_medical_certificate.print_count::int as print_count
+from t_medical_certificate
+where t_medical_certificate.medical_certificate_no = $P{medical_certificate_no}
+and t_medical_certificate.f_medical_certificate_type_id = 1
+group by t_medical_certificate.medical_certificate_no
+,t_medical_certificate.issue_date
+,t_medical_certificate.details
+,t_medical_certificate.print_count]]>
+	</queryString>
+	<field name="medical_certificate_no" class="java.lang.String"/>
+	<field name="issue_date" class="java.sql.Date"/>
+	<field name="physician_name" class="java.lang.String"/>
+	<field name="physician_license" class="java.lang.String"/>
+	<field name="patient_name" class="java.lang.String"/>
+	<field name="examination_date" class="java.sql.Date"/>
+	<field name="examination_place" class="java.lang.String"/>
+	<field name="examination_address" class="java.lang.String"/>
+	<field name="examination_time" class="java.lang.String"/>
+	<field name="examination_diagnosis" class="java.lang.String"/>
+	<field name="opinion_recommendation" class="java.lang.String"/>
+	<field name="total_leave_day" class="java.lang.String"/>
+	<field name="start_leave_day" class="java.sql.Date"/>
+	<field name="end_leave_day" class="java.sql.Date"/>
+	<field name="print_count" class="java.lang.Integer"/>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="762" splitType="Stretch">
+			<staticText>
+				<reportElement uuid="a4bef4f3-e932-4bea-b0f5-969c86e4fcd3" x="0" y="0" width="515" height="27"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="TH Sarabun New" size="20" isBold="true"/>
+				</textElement>
+				<text><![CDATA[ใบรับรองความเจ็บป่วย]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="d73f549d-806e-474c-9d39-1c887cf56c6d" x="0" y="27" width="515" height="27"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="TH Sarabun New" size="20" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{examination_place}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement uuid="b699c95c-e12c-48cd-b276-d37930bb9dfc" x="295" y="85" width="220" height="22"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="TH Sarabun New" size="16"/>
+				</textElement>
+				<text><![CDATA[วันที่...........เดือน......................พ.ศ...............]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="b699c95c-e12c-48cd-b276-d37930bb9dfc" x="0" y="107" width="515" height="22"/>
+				<box leftPadding="50"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="TH Sarabun New" size="16"/>
+				</textElement>
+				<text><![CDATA[ข้าพเจ้านายแพทย์/แพทย์หญิง .................................................................................................................................]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="b699c95c-e12c-48cd-b276-d37930bb9dfc" x="0" y="129" width="515" height="22"/>
+				<box leftPadding="0"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="TH Sarabun New" size="16"/>
+				</textElement>
+				<text><![CDATA[ผู้ประกอบวิชาชีพเวชกรรมใบอนุญาต เลขที่ ................................................................................................................................]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="d73f549d-806e-474c-9d39-1c887cf56c6d" x="0" y="151" width="515" height="44"/>
+				<textElement verticalAlignment="Top">
+					<font fontName="TH Sarabun New" size="16" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA["สถานที่ประกอบวิชาชีพเวชกรรม "+$F{examination_address}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement uuid="b699c95c-e12c-48cd-b276-d37930bb9dfc" x="0" y="194" width="515" height="22"/>
+				<box leftPadding="0"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="TH Sarabun New" size="16"/>
+				</textElement>
+				<text><![CDATA[หนังสือรับรองฉบับนี้ขอรับรองว่า ข้าพเจ้าแพทย์ผู้ตรวจผู้มีชื่อข้างต้นนี้ ได้ทำการตรวจร่างกายบุคคลต่อไปนี้]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="b699c95c-e12c-48cd-b276-d37930bb9dfc" x="0" y="216" width="515" height="22"/>
+				<box leftPadding="0"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="TH Sarabun New" size="16"/>
+				</textElement>
+				<text><![CDATA[ชื่อ - สกุล .....................................................................................................................................................................................]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="b699c95c-e12c-48cd-b276-d37930bb9dfc" x="0" y="238" width="515" height="22"/>
+				<box leftPadding="0"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="TH Sarabun New" size="16"/>
+				</textElement>
+				<text><![CDATA[เมื่อวันที่ ...................................... เดือน ...................................... พ.ศ. ...................................... เวลา ......................................]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="b699c95c-e12c-48cd-b276-d37930bb9dfc" x="0" y="260" width="515" height="22"/>
+				<box leftPadding="0"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="TH Sarabun New" size="16"/>
+				</textElement>
+				<text><![CDATA[จากการตรวจร่างกายของบุคคลข้างต้นแล้ว ขอให้ความเห็นดังต่อไปนี้]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="b699c95c-e12c-48cd-b276-d37930bb9dfc" x="0" y="282" width="515" height="22"/>
+				<box leftPadding="0"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="TH Sarabun New" size="16"/>
+				</textElement>
+				<text><![CDATA[การวินิจฉัยโรค .............................................................................................................................................................................]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="b699c95c-e12c-48cd-b276-d37930bb9dfc" x="0" y="348" width="515" height="22"/>
+				<box leftPadding="0"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="TH Sarabun New" size="16"/>
+				</textElement>
+				<text><![CDATA[สรุปความเห็น ..............................................................................................................................................................................]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="b699c95c-e12c-48cd-b276-d37930bb9dfc" x="0" y="370" width="515" height="22"/>
+				<box leftPadding="0"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="TH Sarabun New" size="16"/>
+				</textElement>
+				<text><![CDATA[......................................................................................................................................................................................................]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="b699c95c-e12c-48cd-b276-d37930bb9dfc" x="252" y="446" width="263" height="22"/>
+				<box leftPadding="0"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="TH Sarabun New" size="16"/>
+				</textElement>
+				<text><![CDATA[ลงชื่อแพทย์ผู้ตรวจ ......................................................................]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="b699c95c-e12c-48cd-b276-d37930bb9dfc" x="252" y="490" width="263" height="22"/>
+				<box leftPadding="0"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="TH Sarabun New" size="16"/>
+				</textElement>
+				<text><![CDATA[ลงชื่อผู้รับการตรวจ .....................................................................]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="d73f549d-806e-474c-9d39-1c887cf56c6d" x="252" y="468" width="263" height="22"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="TH Sarabun New" size="16" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA["("+$F{physician_name}+")"]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="d73f549d-806e-474c-9d39-1c887cf56c6d" x="252" y="512" width="263" height="22"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="TH Sarabun New" size="16" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA["("+$F{patient_name}+")"]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="d73f549d-806e-474c-9d39-1c887cf56c6d" x="355" y="83" width="33" height="22"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="TH Sarabun New" size="16" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[new java.text.SimpleDateFormat("dd", new java.util.Locale("th", "TH")).format($F{issue_date})]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="d73f549d-806e-474c-9d39-1c887cf56c6d" x="404" y="83" width="61" height="22"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="TH Sarabun New" size="16" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[new java.text.SimpleDateFormat("MMMMM", new java.util.Locale("th", "TH")).format($F{issue_date})]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="d73f549d-806e-474c-9d39-1c887cf56c6d" x="477" y="83" width="38" height="22"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="TH Sarabun New" size="16" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[new java.text.SimpleDateFormat("yyyy", new java.util.Locale("th", "TH")).format($F{issue_date})]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="d73f549d-806e-474c-9d39-1c887cf56c6d" x="178" y="105" width="337" height="22"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="TH Sarabun New" size="16" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{physician_name}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="d73f549d-806e-474c-9d39-1c887cf56c6d" x="341" y="0" width="174" height="27"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="TH Sarabun New" size="16" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{medical_certificate_no}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="d73f549d-806e-474c-9d39-1c887cf56c6d" x="188" y="126" width="327" height="22"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="TH Sarabun New" size="16" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{physician_license}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="d73f549d-806e-474c-9d39-1c887cf56c6d" x="51" y="214" width="464" height="22"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="TH Sarabun New" size="16" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{patient_name}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="d73f549d-806e-474c-9d39-1c887cf56c6d" x="38" y="236" width="90" height="22"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="TH Sarabun New" size="16" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[new java.text.SimpleDateFormat("dd", new java.util.Locale("th", "TH")).format($F{examination_date})]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="d73f549d-806e-474c-9d39-1c887cf56c6d" x="160" y="236" width="92" height="22"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="TH Sarabun New" size="16" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[new java.text.SimpleDateFormat("MMMMM", new java.util.Locale("th", "TH")).format($F{examination_date})]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="d73f549d-806e-474c-9d39-1c887cf56c6d" x="281" y="236" width="91" height="22"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="TH Sarabun New" size="16" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[new java.text.SimpleDateFormat("yyyy", new java.util.Locale("th", "TH")).format($F{examination_date})]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="d73f549d-806e-474c-9d39-1c887cf56c6d" x="428" y="236" width="87" height="22"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="TH Sarabun New" size="16" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{examination_time}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="d73f549d-806e-474c-9d39-1c887cf56c6d" x="70" y="280" width="445" height="22"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="TH Sarabun New" size="16" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{examination_diagnosis}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement uuid="d73f549d-806e-474c-9d39-1c887cf56c6d" x="0" y="346" width="515" height="46" isPrintWhenDetailOverflows="true"/>
+				<textElement verticalAlignment="Top">
+					<font fontName="TH Sarabun New" size="16" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA["                   "+$F{opinion_recommendation}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement uuid="a4bef4f3-e932-4bea-b0f5-969c86e4fcd3" x="445" y="27" width="70" height="27">
+					<printWhenExpression><![CDATA[$F{print_count} > 1]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="TH Sarabun New" size="18" isBold="true"/>
+				</textElement>
+				<text><![CDATA[(สำเนา)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="b699c95c-e12c-48cd-b276-d37930bb9dfc" x="0" y="304" width="515" height="22"/>
+				<box leftPadding="0"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="TH Sarabun New" size="16"/>
+				</textElement>
+				<text><![CDATA[สมควรให้พักผ่อน ......................................วัน]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="b699c95c-e12c-48cd-b276-d37930bb9dfc" x="0" y="325" width="515" height="22"/>
+				<box leftPadding="0"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="TH Sarabun New" size="16"/>
+				</textElement>
+				<text><![CDATA[ตั้งแต่วันที่ ................................................................................... ถึงวันที่ ...................................................................................]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="d73f549d-806e-474c-9d39-1c887cf56c6d" x="83" y="302" width="80" height="22"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="TH Sarabun New" size="16" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{total_leave_day}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="d73f549d-806e-474c-9d39-1c887cf56c6d" x="46" y="323" width="198" height="22"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="TH Sarabun New" size="16" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[new java.text.SimpleDateFormat("dd MMMMM yyyy", new java.util.Locale("th", "TH")).format($F{start_leave_day})]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="d73f549d-806e-474c-9d39-1c887cf56c6d" x="295" y="323" width="198" height="22"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="TH Sarabun New" size="16" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[new java.text.SimpleDateFormat("dd MMMMM yyyy", new java.util.Locale("th", "TH")).format($F{end_leave_day})]]></textFieldExpression>
+			</textField>
+		</band>
+	</title>
+</jasperReport>
