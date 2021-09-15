@@ -109,10 +109,11 @@ public class ReportService {
 
         Optional<Report> mainReportCached = repository.findById(mainReport.getHash());
 
-        JasperReport mainJasperReport;
+        JasperReport mainJasperReport = null;
         if (mainReportCached.isPresent()) {
             mainJasperReport = loadJasperReport(mainReportCached.get().getPath());
-        } else {
+        }
+        if (mainJasperReport == null) {
             // load .jrxml from url and compile to .jasper
             String mainJasperPath = parentPath + File.separator + mainReport.getName() + ".jasper";
             mainJasperReport = compileReport(mainReport.getUrl(), mainJasperPath);
@@ -130,12 +131,16 @@ public class ReportService {
                     reportDto.getSubReports()) {
                 Optional<Report> reportCached = repository.findById(subReport.getHash());
                 if (reportCached.isPresent()) {
+                    // check is exist
+                    JasperReport jr = loadJasperReport(reportCached.get().getPath());
                     // skip
-                    continue;
+                    if (jr != null) {
+                        continue;
+                    }
                 }
                 // compile and save
-                String jasperPath =parentPath+ File.separator + subReport.getName() + ".jasper";
-                compileReport(mainReport.getUrl(), jasperPath);
+                String jasperPath = parentPath+ File.separator + subReport.getName() + ".jasper";
+                compileReport(subReport.getUrl(), jasperPath);
                 Report report = new Report();
                 report.setId(subReport.getHash());
                 report.setName(subReport.getName());
@@ -157,7 +162,7 @@ public class ReportService {
                 params.put(param.getName(), param.getConvertedValue());
             }
             params.put("SUBREPORT_DIR", parentPath + File.separator);
-            System.out.println("Parameters:");
+            System.out.println("Parameters for " + mainReport.getName() + ":");
             for (String key :
                     params.keySet()) {
                 System.out.println(key + ":" + params.get(key) + ":" + params.get(key).getClass());
