@@ -3,11 +3,12 @@ package com.github.somprasongd.jasperreports.generater.service;
 import com.github.somprasongd.jasperreports.generater.dto.JasperDto;
 import com.github.somprasongd.jasperreports.generater.dto.ParameterDto;
 import com.github.somprasongd.jasperreports.generater.dto.ReportDto;
-import com.github.somprasongd.jasperreports.generater.model.Report;
-import com.github.somprasongd.jasperreports.generater.repo.ReportRepository;
+import com.github.somprasongd.jasperreports.generater.exception.ReportGenerationException;
 import net.sf.jasperreports.engine.*;
 import net.sf.jasperreports.engine.util.JRLoader;
 import net.sf.jasperreports.engine.util.JRSaver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -25,66 +26,12 @@ import java.util.Optional;
 
 @Service
 public class ReportService {
+    private static final Logger logger = LoggerFactory.getLogger(ReportService.class);
     private final String JASPER_DIR = System.getProperty("user.dir") + File.separator + "jaspers";
 
-    private ReportRepository repository;
-
-
     @Autowired
-    public ReportService(ReportRepository repository) {
-        this.repository = repository;
-    }
+    public ReportService() {
 
-    public List<Report> retrieveReports() {
-        return (List<Report>) repository.findAll();
-    }
-
-    public Optional<Report> retrieveReports(String id) {
-        return repository.findById(id);
-    }
-
-    public List<Report> retrieveReportsByName(String name) {
-        return repository.findByName(name);
-    }
-
-    public Report createReport(Report report) {
-        return repository.save(report);
-    }
-
-    public Optional<Report> updateCustomer(String id, Report report) {
-        Optional<Report> customerOpt = repository.findById(id);
-        if (!customerOpt.isPresent()) {
-            return customerOpt;
-        }
-        report.setId(id);
-        return Optional.of(repository.save(report));
-    }
-
-    public boolean deleteCustomer(String id) {
-        try {
-            repository.deleteById(id);
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    private String getReportNameFromUrl(String url) throws IOException {
-        URL reportUrl = new URL(url);
-        String reportName = reportUrl.getPath().substring(reportUrl.getPath().lastIndexOf("/") + 1, reportUrl.getPath().lastIndexOf("."));
-        return reportName;
-    }
-
-    private JasperReport compileReport(String url) throws IOException, JRException {
-        URL reportUrl = new URL(url);
-        String reportName = getReportNameFromUrl(url);
-        JasperReport jasperReport;
-        try (InputStream employeeReportStream = reportUrl.openStream()) {
-            jasperReport = JasperCompileManager.compileReport(employeeReportStream);
-
-            JRSaver.saveObject(jasperReport, "jaspers" + File.separator + reportName + ".jasper");
-        }
-        return jasperReport;
     }
 
     private JasperReport loadJasperReport(String sourceFile) {
@@ -93,65 +40,59 @@ public class ReportService {
             return null;
         }
         try {
-            JasperReport  jasperReport = (JasperReport ) JRLoader.loadObject(file);
-            return jasperReport;
+            return (JasperReport ) JRLoader.loadObject(file);
         }catch (JRException ex) {
             return null;
         }
-
     }
 
-    public JasperPrint generateReport(ReportDto reportDto) throws IOException, JRException {
-
+    public JasperPrint generateReport(ReportDto reportDto)  {
         JasperDto mainReport = reportDto.getMainReport();
 
         String parentPath = JASPER_DIR + File.separator +  mainReport.getName();
 
-        Optional<Report> mainReportCached = repository.findById(mainReport.getHash());
+        String mainJasperPath = parentPath + File.separator + mainReport.getName() + "." + mainReport.getHash() + ".jasper";
 
         JasperReport mainJasperReport = null;
-        if (mainReportCached.isPresent()) {
-            mainJasperReport = loadJasperReport(mainReportCached.get().getPath());
-        }
-        if (mainJasperReport == null) {
-            // load .jrxml from url and compile to .jasper
-            String mainJasperPath = parentPath + File.separator + mainReport.getName() + ".jasper";
-            mainJasperReport = compileReport(mainReport.getUrl(), mainJasperPath);
-            // save
-            Report report = new Report();
-            report.setId(mainReport.getHash());
-            report.setName(mainReport.getName());
-            report.setPath(mainJasperPath);
-            repository.save(report);
+        if (new File(mainJasperPath).exists()) {
+            mainJasperReport = loadJasperReport(mainJasperPath);
+        } else {
+            try {
+                logger.info("Load main report: " + mainReport.getUrl());
+                mainJasperReport = compileReport(mainReport.getUrl(), mainJasperPath);
+            } catch (Exception e) {
+                logger.error("Failed to generate the report", e);
+                throw new ReportGenerationException("Failed to generate the report", e);
+            }
         }
 
         // compile sub report to .jasper
         if (reportDto.getSubReports() != null){
             for (JasperDto subReport :
                     reportDto.getSubReports()) {
-                Optional<Report> reportCached = repository.findById(subReport.getHash());
-                if (reportCached.isPresent()) {
+                String subJasperPath = parentPath + File.separator + subReport.getName() + "." + subReport.getHash() + ".jasper";
+                if (new File(subJasperPath).exists()) {
                     // check is exist
-                    JasperReport jr = loadJasperReport(reportCached.get().getPath());
+                    JasperReport jr = loadJasperReport(subJasperPath);
                     // skip
                     if (jr != null) {
                         continue;
                     }
+                } else {
+                    // compile and save
+                    try {
+                        logger.info("Load sub report: " + subReport.getUrl());
+                        compileReport(subReport.getUrl(), subJasperPath);
+                    } catch (Exception e) {
+                        logger.error("Failed to generate the sub-report", e);
+                        throw new ReportGenerationException("Failed to generate the sub-report", e);
+                    }
                 }
-                // compile and save
-                String jasperPath = parentPath+ File.separator + subReport.getName() + ".jasper";
-                compileReport(subReport.getUrl(), jasperPath);
-                Report report = new Report();
-                report.setId(subReport.getHash());
-                report.setName(subReport.getName());
-                report.setPath(jasperPath);
-                repository.save(report);
             }
         }
 
         // generate report
         JasperPrint jasperPrint;
-
         try (Connection conn = DriverManager.getConnection(reportDto.getDbUrl())) {
             Map<String, Object> params = new HashMap<>();
             for (ParameterDto param :
@@ -162,16 +103,16 @@ public class ReportService {
                 params.put(param.getName(), param.getConvertedValue());
             }
             params.put("SUBREPORT_DIR", parentPath + File.separator);
-            System.out.println("Parameters for " + mainReport.getName() + ":");
+            logger.info("Parameters for " + mainReport.getName() + ":");
             for (String key :
                     params.keySet()) {
-                System.out.println(key + ":" + params.get(key) + ":" + params.get(key).getClass());
+                logger.info(key + ":" + params.get(key) + ":" + params.get(key).getClass());
             }
             jasperPrint = JasperFillManager.fillReport(
                     mainJasperReport, params, conn);
-        } catch (SQLException throwables) {
-            throwables.printStackTrace();
-            return null;
+        } catch (Exception e) {
+            logger.error("Generate PDF failed", e);
+            throw new ReportGenerationException("Failed to generate pdf", e);
         }
         return jasperPrint;
     }
@@ -179,8 +120,8 @@ public class ReportService {
     private JasperReport compileReport(String url, String jasperPath) throws IOException, JRException {
         URL reportUrl = new URL(url);
         JasperReport jasperReport;
-        try (InputStream employeeReportStream = reportUrl.openStream()) {
-            jasperReport = JasperCompileManager.compileReport(employeeReportStream);
+        try (InputStream reportStream = reportUrl.openStream()) {
+            jasperReport = JasperCompileManager.compileReport(reportStream);
             File file = new File(jasperPath);
             File parentFile = file.getParentFile();
             if (!parentFile.exists()) {
